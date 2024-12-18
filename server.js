@@ -2,6 +2,7 @@ import express from "express"
 import multer from "multer"
 import path from "path"
 import { fileURLToPath } from "url";
+import cors from "cors"
 
 const PORT =  5000;
 
@@ -19,6 +20,13 @@ const fileStorage = multer.diskStorage({
     }
 })
 const upload = multer({storage: fileStorage});
+
+const corsOptions = {
+    origin: "http://localhost:5173", // Remove trailing slash
+    credentials: true, // Fix typo: "credentails" to "credentials"
+    optionsSuccessStatus: 200, // Fix typo: "optionSuccessStatus" to "optionsSuccessStatus"
+  };
+  app.use(cors(corsOptions));
 
 app.get("/", (req,res) => {
     res.sendFile(path.join(__dirname, "index.html"))

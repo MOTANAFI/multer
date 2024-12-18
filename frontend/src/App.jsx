@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
+const uploadImage = async (imageData) => {
+  const response = await axios.post(
+    "http://localhost:5000/multiple",
+    imageData
+  );
+  console.log("image uploaded successfully", response.data);
+};
 function App() {
-  const [count, setCount] = useState(0)
-
+  const { mutate, isError, isSuccess, data } = useMutation({
+    mutationFn: uploadImage,
+  });
+  const formik = useFormik({
+    initialValues: {
+      files: [],
+    },
+    validationSchema: Yup.object({
+      files: Yup.array()
+        .required("At least one file is required")
+        .min(1, "You must upload at least one file")
+        .test("fileTypes", "Only image files are allowed", (files) =>
+          files.every((file) =>
+            ["image/jpeg", "image/png", "image/jpg"].includes(file.type)
+          )
+        ),
+    }),
+    onSubmit: async (values) => {
+      const formData = new FormData();
+      values.files.forEach((file) => formData.append("images", file));
+      mutate(formData, {
+        onSuccess: () => {
+          
+        },
+      });
+    },
+  });
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="app">
+      <h1>React file uploading</h1>
+      <form onSubmit={formik.handleSubmit}>
+        <input
+          type="file"
+          name="images"
+          multiple
+          // {...formik.getFieldProps("file")}
+          onChange={(e) =>
+            formik.setFieldValue("files", Array.from(e.target.files))
+          }
+        />
+        <button
+          type="submit"
+          disabled={formik.isSubmitting || formik.errors.files}
+        >
+          submit
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      </form>
+    </div>
+  );
 }
 
-export default App
+export default App;
